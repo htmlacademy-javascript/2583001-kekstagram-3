@@ -38,6 +38,8 @@ const EFFECT_SETTINGS = {
   }
 };
 
+const FILE_TYPES = ['jpg', 'jpeg', 'png'];
+
 const SubmitButtonText = {
   IDLE: 'Опубликовать',
   SENDING: 'Публикую...',
@@ -62,6 +64,9 @@ const effectSlider = imgForm.querySelector('.effect-level__slider');
 const effectList = imgForm.querySelector('.effects__list');
 
 const submitButton = imgForm.querySelector('.img-upload__submit');
+const previewPhotoEffects = document.querySelectorAll('.effects__preview');
+
+let currentObjectUrl;
 
 
 const pristine = new Pristine(imgForm, {
@@ -89,6 +94,17 @@ const onPreviewClick = () => {
   pristine.reset();
   imgUploadPreview.style.transform = '';
 
+  imgUploadPreview.src = 'img/upload-default-image.jpg';
+
+  previewPhotoEffects.forEach((previewPhotoEffect) => {
+    previewPhotoEffect.style.backgroundImage = '';
+  });
+
+  if (currentObjectUrl) {
+    URL.revokeObjectURL(currentObjectUrl);
+    currentObjectUrl = null;
+  }
+
   document.removeEventListener('keydown', onDocumentKeydown);
 };
 
@@ -99,9 +115,32 @@ function onDocumentKeydown(evt) {
   }
 }
 
-const onPreviewChange = () => {
+const onPreviewChange = (evt) => {
+  const file = evt.target.files[0];
+
+  if (!file) {
+    return;
+  }
+
+  const fileName = file.name.toLowerCase();
+
+  const matches = FILE_TYPES.some((it) => fileName.endsWith(`.${it}`));
+
+  if (!matches) {
+    fileUploadControl.value = '';
+    return;
+  }
+
+  currentObjectUrl = URL.createObjectURL(file);
+
+  previewPhotoEffects.forEach((previewPhotoEffect) => {
+    previewPhotoEffect.style.backgroundImage = `url("${currentObjectUrl}")`;
+  });
+
   previewWindow.classList.remove('hidden');
   document.body.classList.add('modal-open');
+
+  imgUploadPreview.src = currentObjectUrl;
 
   imgUploadEffectLevel.classList.add('hidden');
   imgUploadPreview.style.filter = '';
